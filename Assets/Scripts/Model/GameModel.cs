@@ -22,6 +22,9 @@ public class GameModel
 	public bool GameIsComplete;
 	public int LastWinnerPlayerId;
 
+	private State state;
+
+
 	public GameField GameField;
 	public GameState GameState;
 	public GameStateCollection GameStateCollection;
@@ -61,6 +64,8 @@ public class GameModel
 		CurrentPlayer = FirstPlayerId == 1 ? HumanPlayer as Player : CPUPlayer as Player;
 		CurrentPlayer.OnEnter ();
 
+		state = State.PlayersMove;
+
 
 		if (OnGameStarted != null) {
 			OnGameStarted ();
@@ -70,10 +75,21 @@ public class GameModel
 
 	public void Update ()
 	{
-		if (GameIsComplete) {
-			return;
+		switch (state) {
+		case State.PlayersMove:
+			UpdatePlayerMoveState ();
+			break;
+		case State.OutcomeEvaluation:
+			UpdateOutcomeEvaluationState ();
+			break;
+		case State.GameComplete:
+			UpdateGameCompleteState ();
+			break;
 		}
+	}
 
+	private void UpdatePlayerMoveState ()
+	{
 		GameStateCollection.Update ();
 		CurrentPlayer.Update ();
 		if (CurrentPlayer.IsMoveComplete) {
@@ -87,27 +103,41 @@ public class GameModel
 				OnMoveMade ();
 			}
 
-			if (GameState.IsFinal) {
-				if (GameState.WinnerPlayerId == 1) {
-					TotalWins++;
-				} else if (GameState.WinnerPlayerId == 2) {
-					TotalLoses++;
-				} else {
-					TotalDraws++;
-				}
-
-				GameIsComplete = true;
-				LastWinnerPlayerId = GameState.WinnerPlayerId;
-
-				if (OnGameComplete != null) {
-					OnGameComplete ();
-				}
-			} else {
-				CurrentPlayerId = CurrentPlayerId == 1 ? 2 : 1;
-				CurrentPlayer = CurrentPlayerId == 1 ? HumanPlayer as Player : CPUPlayer as Player;
-				CurrentPlayer.OnEnter ();
-			}
+			state = State.OutcomeEvaluation;
 		}
+	}
+
+	private void UpdateOutcomeEvaluationState ()
+	{
+		GameStateCollection.Update ();
+		if (GameState.IsFinal) {
+			if (GameState.WinnerPlayerId == 1) {
+				TotalWins++;
+			} else if (GameState.WinnerPlayerId == 2) {
+				TotalLoses++;
+			} else {
+				TotalDraws++;
+			}
+
+			GameIsComplete = true;
+			LastWinnerPlayerId = GameState.WinnerPlayerId;
+			state = State.GameComplete;
+
+			if (OnGameComplete != null) {
+				OnGameComplete ();
+			}
+		} else {
+			CurrentPlayerId = CurrentPlayerId == 1 ? 2 : 1;
+			CurrentPlayer = CurrentPlayerId == 1 ? HumanPlayer as Player : CPUPlayer as Player;
+			CurrentPlayer.OnEnter ();
+
+			state = State.PlayersMove;
+		}
+	}
+
+	private void UpdateGameCompleteState ()
+	{
+		
 	}
 
 
