@@ -19,8 +19,6 @@ public class GameResultViewMediator : MonoBehaviour
 
 	private void OnOkButtonClick ()
 	{
-		SceneManager.LoadSceneAsync (SceneNames.Menu, LoadSceneMode.Additive);
-		SceneManager.UnloadScene (SceneNames.GameResult);
-		SceneManager.UnloadScene (SceneNames.Game);
+		SceneManager.LoadSceneAsync (SceneNames.Menu);
 	}
 }

@@ -22,8 +22,7 @@ public class MenuViewMediator : MonoBehaviour
 
 	private void OnPlayButtonClicked ()
 	{
-		SceneManager.LoadSceneAsync (SceneNames.Game, LoadSceneMode.Additive);
-		SceneManager.UnloadScene (SceneNames.Menu);
+		SceneManager.LoadSceneAsync (SceneNames.Game);
 	}
 
 	private void OnGameDifficultyChangeRequest (GameDifficulty gameDifficulty)

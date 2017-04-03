@@ -37,8 +37,7 @@ public class GameViewMediator : MonoBehaviour
 
 	public void OnBackButton ()
 	{
-		SceneManager.LoadSceneAsync (SceneNames.Menu, LoadSceneMode.Additive);
-		SceneManager.UnloadScene (SceneNames.Game);
+		SceneManager.LoadSceneAsync (SceneNames.Menu);
 	}
 
 	private void OnGameStarted ()
