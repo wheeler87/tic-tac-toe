@@ -53,6 +53,18 @@ public class GameModel
 		GameStateCollection = new GameStateCollection ();
 		GameStateCollection.Init (GameField, CurrentPlayerId);
 
+		switch (difficulty) {
+		case GameDifficulty.Easy:
+			GameState.evaluationPoints = EvaluationPoints.Easy;
+			break;
+		case GameDifficulty.Medium:
+			GameState.evaluationPoints = EvaluationPoints.Medium;
+			break;
+		case GameDifficulty.Invincible:
+			GameState.evaluationPoints = EvaluationPoints.Invincible;
+			break;
+		}
+
 		HumanPlayer = new HumanPlayer ();
 		HumanPlayer.Id = 1;
 		HumanPlayer.GameModel = this;
@@ -60,6 +72,7 @@ public class GameModel
 		CPUPlayer = new CPUPlayer ();
 		CPUPlayer.Id = 2;
 		CPUPlayer.GameModel = this;
+
 
 		CurrentPlayer = FirstPlayerId == 1 ? HumanPlayer as Player : CPUPlayer as Player;
 		CurrentPlayer.OnEnter ();

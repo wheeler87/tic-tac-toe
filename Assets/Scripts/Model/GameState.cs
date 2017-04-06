@@ -5,6 +5,8 @@ using System.Linq;
 
 public class GameState
 {
+	public static EvaluationPoints evaluationPoints = EvaluationPoints.Easy;
+
 	public GameState Parent;
 
 	public GameField gameField;
@@ -18,6 +20,10 @@ public class GameState
 
 	public bool IsInitialized;
 	private bool initializationJustStarted;
+
+	EvaluationPoints lastUsedEvaluationPoints;
+	private int evaluationPointsPlayer = 0;
+	private int evaluationPointsOpponent = 0;
 
 
 
@@ -96,6 +102,113 @@ public class GameState
 	{
 		return ExtractSubChildren (this, 1, depth);		
 	}
+
+	public int GetEvaluationPoints (int playerId)
+	{
+		if (lastUsedEvaluationPoints != evaluationPoints) {
+			lastUsedEvaluationPoints = evaluationPoints;
+			Evaluate ();
+		}
+
+		return this.PlayerId == playerId ? evaluationPointsPlayer : evaluationPointsOpponent;
+	}
+
+	private void Evaluate ()
+	{
+		int opponentId = PlayerId == 1 ? 2 : 1;
+		evaluationPointsPlayer = EvaluateForPlayer (this.PlayerId, opponentId);
+
+		evaluationPointsOpponent = EvaluateForPlayer (opponentId, this.PlayerId);
+	}
+
+	private int EvaluateForPlayer (int playerId, int opponentId)
+	{
+		int result = 0;
+		if (IsFinal) {
+			if (WinnerPlayerId == playerId) {
+				result = evaluationPoints.EvaluationPointsVictory;
+			} else if (WinnerPlayerId == 0) {
+				result = evaluationPoints.EvaluationPointsDraw;
+			} else {
+				result = evaluationPoints.EvaluationPointsLose;
+			}
+
+			return result;
+		}
+		int currentStateNearWinCount = gameField.GetNearWinsCount (playerId);
+
+		if (currentStateNearWinCount > 1) {
+			result += evaluationPoints.EvaluationPointsTrap;
+		} else if (currentStateNearWinCount > 0) {
+			result += evaluationPoints.EvaluationPointsNearWin;
+		}
+
+
+
+
+		var childrenList = ExtractSubChildren (this, 0, 1);
+		for (int i = 0; i < childrenList.Count; i++) {
+			var currentState = childrenList [i];
+
+			int childNearWinLast = currentState.Parent.gameField.GetNearWinsCount (playerId);
+
+			if (childNearWinLast > 0) {
+				continue;
+			}
+
+			int childNearWinCurrent = currentState.gameField.GetNearWinsCount (playerId);
+			if (currentState.Parent.gameField.GetNearWinsCount (opponentId) > 1) {
+				result += evaluationPoints.EvaluationPointsChildrenOpponentTrap;
+				continue;
+			}
+
+
+
+			if (childNearWinCurrent > 1) {
+				if (currentStateNearWinCount > 0) {
+					result += evaluationPoints.EvaluationPointsTrap;
+				} else {
+					result += evaluationPoints.EvaluationPointsChildrenTrap;
+				}
+			} else if (childNearWinCurrent > 0) {
+				result += evaluationPoints.EvaluationPointsChildNearWin;
+			}
+		}
+
+
+		var enemyChildrenList = ExtractSubChildren (this, 0, 2);
+		for (int i = 0; i < enemyChildrenList.Count; i++) {
+			var currentState = enemyChildrenList [i];
+			if (currentState.gameField.GetNearWinsCount (opponentId) > 1) {
+				result += evaluationPoints.EvaluationPointsGrandchildrenOpponentTrap;
+			}
+		}
+
+
+		var grandchildrenList = ExtractSubChildren (this, 0, 3);
+		for (int i = 0; i < grandchildrenList.Count; i++) {
+			var currentState = grandchildrenList [i];
+
+			if (currentState.Parent.Parent.gameField.HasNearWin (opponentId)) {
+				continue;
+			}
+
+			int grandchildNearWinLast = currentState.Parent.gameField.GetNearWinsCount (playerId);
+			int grandchildNearWinCurrent = currentState.gameField.GetNearWinsCount (playerId);
+
+			if (grandchildNearWinLast > 0) {
+				continue;
+			}
+
+			if ((grandchildNearWinCurrent - grandchildNearWinLast) > 1) {
+				result += evaluationPoints.EvaluationPointsGrandchildrenTrap;
+			}
+		}
+
+		return result;
+	}
+
+
 
 	private List<GameState> ExtractSubChildren (GameState gameState, int currentDepth, int targetDepth)
 	{

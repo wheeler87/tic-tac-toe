@@ -11,9 +11,7 @@ public class CPUPlayer : Player
 	{
 		base.OnEnter ();
 
-		var initialCase = GameModel.GameState == null;
-
-		pauseEndTime = initialCase ? Time.time + 2 : Time.time + 1;
+		pauseEndTime = Time.time + 1;
 	}
 
 
@@ -23,43 +21,14 @@ public class CPUPlayer : Player
 			return;
 		}
 
-		IsMoveComplete = true;	
-		switch (GameModel.Difficulty) {
-
-		case GameDifficulty.Easy:
-			MakeMoveEasy ();
-			break;
-
-		case GameDifficulty.Medium:
-			MakeMoveMedium ();
-			break;
-
-		case GameDifficulty.Invincible:
-			MakeMoveInvincible ();
-			break;
-		}
-
-	}
-
-	private void MakeMoveEasy ()
-	{
-		var gameState = GetStateThatLeadsToVictory ();
-		if (gameState != null) {
-			MoveToGameState (gameState);
+		if (!GameModel.GameStateCollection.IsInitialized) {
 			return;
 		}
 
-		gameState = GetStateThatPreventsLose ();
-		if (gameState != null) {
-			MoveToGameState (gameState);
-			return;
-		}
+		IsMoveComplete = true;
 
-		MakeRandomMove ();
-	}
 
-	private void MakeMoveMedium ()
-	{
+
 		var gameState = GetStateThatLeadsToVictory ();
 		if (gameState != null) {
 			MoveToGameState (gameState);
@@ -70,7 +39,7 @@ public class CPUPlayer : Player
 			MoveToGameState (gameState);
 			return;
 		}
-		gameState = Random.Range (1, 100) < 70 ? GetMostOptimalState (3) : null;
+		gameState = GetMostOptimalState ();
 		if (gameState != null) {
 			MoveToGameState (gameState);
 			return;
@@ -79,27 +48,7 @@ public class CPUPlayer : Player
 		MakeRandomMove ();
 
 
-	}
 
-	private void MakeMoveInvincible ()
-	{
-		var gameState = GetStateThatLeadsToVictory ();
-		if (gameState != null) {
-			MoveToGameState (gameState);
-			return;
-		}
-		gameState = GetStateThatPreventsLose ();
-		if (gameState != null) {
-			MoveToGameState (gameState);
-			return;
-		}
-		gameState = GetMostOptimalState (int.MaxValue);
-		if (gameState != null) {
-			MoveToGameState (gameState);
-			return;
-		}
-
-		MakeRandomMove ();
 	}
 
 
@@ -169,54 +118,32 @@ public class CPUPlayer : Player
 		this.GameModel.GameField.SetPlayerIdAt (gameState.Column, gameState.Row, Id);
 	}
 
-	public GameState GetMostOptimalState (int maxDepth)
+	private GameState GetMostOptimalState ()
 	{
-		var stateList = GameModel.GameState != null ? GameModel.GameState.ChildStateList : GameModel.GameStateCollection.GameStateList;
-		GameState result = null;
-		float resultEvaluation = int.MinValue;
+		var gameStateList = GameModel.GameState != null ? GameModel.GameState.ChildStateList : GameModel.GameStateCollection.GameStateList;
+		int resultPoints = int.MinValue;
+		List<GameState> resultList = new List<GameState> ();
 
-		for (int i = 0; i < stateList.Count; i++) {
-			var gameState = stateList [i];
-			var points = EvaluateState (gameState, 1, maxDepth);
-			if (points > resultEvaluation) {
-				result = gameState;
-				resultEvaluation = points;
+		for (int i = 0; i < gameStateList.Count; i++) {
+			var gameState = gameStateList [i];
+			int gameStatePoints = gameState.GetEvaluationPoints (Id);
+
+			if (resultList.Count == 0 || gameStatePoints > resultPoints) {
+				resultList.Clear ();
+				resultList.Add (gameState);
+				resultPoints = gameStatePoints;
+			} else if (gameStatePoints == resultPoints) {
+				resultList.Add (gameState);
 			}
-
 		}
 
-
-		if (result == null && stateList.Count > 0) {
-			result = stateList [0];
+		if (resultList.Count == 0) {
+			return null;
 		}
 
-		return result;
-	}
+		int index = Random.Range (0, resultList.Count - 1);
+		return resultList [index];
 
-	private float EvaluateState (GameState state, int depth, int maxDepth)
-	{
-		if (state.IsFinal) {
-			if (state.WinnerPlayerId == Id) {
-				return 1.0f / depth;
-			}
-
-			if (state.WinnerPlayerId != 0) {
-				return-2.0f / depth;
-			}
-
-			return 0;
-		}
-
-		if (depth > maxDepth) {
-			return 0;
-		}
-
-		float result = 0;
-		for (int i = 0; i < state.ChildStateList.Count; i++) {
-			result += EvaluateState (state.ChildStateList [i], depth + 1, maxDepth);
-		}
-
-		return result;
 	}
 
 }

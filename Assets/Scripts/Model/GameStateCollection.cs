@@ -7,7 +7,7 @@ public class GameStateCollection
 	public List<GameState> GameStateList = new List<GameState> ();
 	public List<GameState> AllGameStateList = new List<GameState> ();
 
-	private bool isInitialized;
+	public bool IsInitialized{ get; set; }
 
 	public void Init (GameField gameField, int currentPlayerId)
 	{
@@ -21,12 +21,12 @@ public class GameStateCollection
 			GameStateList.Add (state);
 		}
 
-		isInitialized = false;
+		IsInitialized = false;
 	}
 
 	public void Update ()
 	{
-		if (isInitialized) {
+		if (IsInitialized) {
 			return;
 		}
 
@@ -44,7 +44,7 @@ public class GameStateCollection
 				AddGameState (GameStateList [i]);
 			}
 
-			isInitialized = true;
+			IsInitialized = true;
 		}
 	}
 

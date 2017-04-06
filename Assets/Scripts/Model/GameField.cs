@@ -206,6 +206,35 @@ public class GameField
 		return false;
 	}
 
+	public int GetNearWinsCount (int playerId, int movesLeft = 1)
+	{
+		int result = 0;
+
+		if ((GetPlayerMoveCountAtTLRBRDiagonal (playerId) == (Size - movesLeft)) &&
+		    (GetPlayerMoveCountAtTLRBRDiagonal (0) == movesLeft)) {
+			result++;
+		}
+
+		if ((GetPlayerMoveCountAtTRBLDiagonal (playerId) == (Size - movesLeft)) &&
+		    (GetPlayerMoveCountAtTRBLDiagonal (0) == movesLeft)) {
+			result++;
+		}
+
+		for (int i = 0; i < Size; i++) {
+			if ((GetPlayerMoveCountAtColumn (i, playerId) == (Size - movesLeft)) &&
+			    (GetPlayerMoveCountAtColumn (i, 0) == movesLeft)) {
+				result++;
+			}
+
+			if ((GetPlayerMoveCountAtRow (i, playerId) == (Size - movesLeft)) &&
+			    (GetPlayerMoveCountAtRow (i, 0) == movesLeft)) {
+			    result++;
+			}
+		}
+
+		return result;
+	}
+
 	private int GetPlayerMoveCountAtRow (int row, int playerId)
 	{
 		int result = 0;
